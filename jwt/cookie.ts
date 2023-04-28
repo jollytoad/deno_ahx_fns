@@ -1,6 +1,5 @@
 import { deleteCookie, getCookies, setCookie } from "$std/http/cookie.ts";
-
-const AHX_TOKEN = "ahx_token";
+import { TOKEN_COOKIE } from "../constants.ts";
 
 export function setTokenCookie(
   req: Request,
@@ -9,7 +8,7 @@ export function setTokenCookie(
 ): Headers {
   if (token) {
     setCookie(headers, {
-      name: AHX_TOKEN,
+      name: TOKEN_COOKIE,
       value: token,
       maxAge: 3600,
       sameSite: "Lax",
@@ -24,14 +23,14 @@ export function setTokenCookie(
 }
 
 export function getTokenCookie(req: Request): string | undefined {
-  return getCookies(req.headers)[AHX_TOKEN];
+  return getCookies(req.headers)[TOKEN_COOKIE];
 }
 
 export function deleteTokenCookie(
   req: Request,
   headers: Headers = new Headers(),
 ): Headers {
-  deleteCookie(headers, AHX_TOKEN, {
+  deleteCookie(headers, TOKEN_COOKIE, {
     domain: new URL(req.url).hostname,
     path: "/",
   });
