@@ -1,5 +1,6 @@
 import { deleteCookie, getCookies, setCookie } from "$std/http/cookie.ts";
 import { TOKEN_COOKIE } from "../constants.ts";
+import { decodeTokenPayload } from "./decode.ts";
 
 export function setTokenCookie(
   req: Request,
@@ -7,14 +8,20 @@ export function setTokenCookie(
   headers: Headers = new Headers(),
 ): Headers {
   if (token) {
+    const url = new URL(req.url);
+
+    const exp = decodeTokenPayload(token)?.exp;
+    const now = Math.floor(Date.now() / 1000);
+    const maxAge = exp ? exp - now : 0;
+
     setCookie(headers, {
       name: TOKEN_COOKIE,
       value: token,
-      maxAge: 3600,
+      maxAge,
       sameSite: "Lax",
-      domain: new URL(req.url).hostname,
+      domain: url.hostname,
       path: "/",
-      secure: true,
+      secure: url.protocol === "https:",
       httpOnly: true,
     });
   }

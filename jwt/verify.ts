@@ -1,21 +1,23 @@
 import { cryptoAlg } from "./alg.ts";
 import { decodeB64Url, decodeJsonPart, encodeUint8 } from "./encoding.ts";
 import { getVerificationKeys } from "./key.ts";
-import type { JwtClaims, JwtHeader } from "./types.ts";
+import type { JwtClaims, JwtHeader, KeySupplier } from "./types.ts";
 
 /**
  * Verify a JWT token and obtain it's payload
  */
 export async function verifyToken<T>(
-  _req: Request,
+  req: Request,
   jwt?: string,
+  keySupplier: KeySupplier = getVerificationKeys,
 ): Promise<(JwtClaims & T) | undefined> {
   const parts = jwt?.split(".") ?? [];
   if (parts.length !== 3) return;
 
   const [headerPart, payloadPart, signaturePart] = parts;
 
-  const { alg, typ } = decodeJsonPart<JwtHeader>(headerPart);
+  const header = decodeJsonPart<JwtHeader>(headerPart);
+  const { typ, alg } = header;
 
   if (typ !== "JWT") return;
 
@@ -42,7 +44,7 @@ export async function verifyToken<T>(
     return;
   }
 
-  for await (const key of getVerificationKeys()) {
+  for await (const key of keySupplier(req, header)) {
     if (
       key.type === "private" || key.algorithm.name !== algorithm.name ||
       !key.usages.includes("verify")

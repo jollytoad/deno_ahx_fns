@@ -1,5 +1,6 @@
 export interface JwtHeader {
   alg: string;
+  kid?: string;
   typ: "JWT";
 }
 
@@ -12,3 +13,8 @@ export interface JwtClaims {
   exp?: number;
   jti?: string;
 }
+
+export type KeySupplier = (
+  req: Request,
+  header: JwtHeader,
+) => AsyncIterable<CryptoKey>;

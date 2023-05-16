@@ -1,7 +1,7 @@
 {
   "imports": {
-    "$std/": "https://deno.land/std@0.184.0/",
-    "$http_fns/": "https://deno.land/x/http_fns@v0.0.7/",
+    "$std/": "https://deno.land/std@0.187.0/",
+    "$http_fns/": "https://deno.land/x/http_fns@v0.0.9/",
     "$http_render_fns/": "https://deno.land/x/http_render_fns@v0.0.1/"
   }
 }

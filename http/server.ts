@@ -3,7 +3,7 @@ import {
   serve as stdServe,
   type ServeInit,
 } from "$std/http/server.ts";
-import { intercept } from "$http_fns/intercept.ts";
+import { intercept, type ResponseInterceptor } from "$http_fns/intercept.ts";
 import {
   logError,
   logGroupEnd,
@@ -11,18 +11,22 @@ import {
   logStatusAndContentType,
 } from "$http_fns/logger.ts";
 
+interface ExtraInit {
+  responseInterceptors?: ResponseInterceptor<Response>[];
+}
+
 /**
  * Standard server for an addon.
  */
 export function serve(
   handler: Handler,
-  options: ServeInit = {},
+  { responseInterceptors = [], ...options }: ServeInit & ExtraInit = {},
 ) {
   return stdServe(
     intercept(
       handler,
       [logRequestGroup],
-      [logGroupEnd, logStatusAndContentType],
+      [...responseInterceptors, logGroupEnd, logStatusAndContentType],
       [logGroupEnd, logError],
     ),
     options,
