@@ -1,84 +1,92 @@
 import { cryptoAlg } from "./alg.ts";
-import { ensureDir } from "$std/fs/ensure_dir.ts";
-import { dirname } from "$std/path/mod.ts";
+import * as store from "$store";
+import type { Jwks } from "./types.ts";
 
-let keyCache: CryptoKeyPair | undefined;
+let keyCache: Promise<Partial<CryptoKeyPair>> | undefined;
 
-const PRIVATE_KEY_FILE = ".keys/private.jwk";
-const PUBLIC_KEY_FILE = ".keys/public.jwk";
+let jwksCache: Promise<Jwks> | undefined;
 
-// deno-lint-ignore require-await
+const STORE_KEY_PREFIX = ["ahx", "keys"];
+
 export async function getSigningKey(): Promise<CryptoKey | undefined> {
-  return keyCache?.privateKey;
+  return (await keyCache)?.privateKey;
 }
 
 export async function* getVerificationKeys(): AsyncIterable<CryptoKey> {
-  if (keyCache?.publicKey) {
-    yield keyCache?.publicKey;
+  const publicKey = (await keyCache)?.publicKey;
+  if (publicKey) {
+    yield publicKey;
   }
+  // TODO: yield older keys
+}
+
+export function getJwks(): Promise<Jwks> {
+  if (!jwksCache) {
+    jwksCache = generateJwks();
+  }
+  return jwksCache;
 }
 
 export async function initKeys(): Promise<void> {
   if (!keyCache) {
-    keyCache = await readCryptoKeyPair();
+    keyCache = getCryptoKeyPair();
   }
-
-  if (!keyCache) {
-    keyCache = await generateKeyPair();
-    await writeCryptoKeyPair(keyCache);
-  }
+  await keyCache;
 }
 
-async function readCryptoKeyPair(): Promise<CryptoKeyPair | undefined> {
-  const privateJwk = await readJwk(PRIVATE_KEY_FILE);
-  const publicJwk = await readJwk(PUBLIC_KEY_FILE);
+export async function rotateKeys(): Promise<void> {
+  const keyPair = await generateKeyPair();
+  // TODO: copy current public key to old keys list
+  await writeCryptoKeyPair(keyPair);
+  keyCache = Promise.resolve(keyPair);
+  jwksCache = undefined;
+}
 
-  if (!privateJwk || !publicJwk) {
-    return undefined;
+async function getCryptoKeyPair(): Promise<Partial<CryptoKeyPair>> {
+  let keyPair = await readCryptoKeyPair();
+
+  if (!keyPair.privateKey || !keyPair.publicKey) {
+    keyPair = await generateKeyPair();
+    await writeCryptoKeyPair(keyPair);
   }
 
-  const privateKey = await crypto.subtle.importKey(
+  return keyPair;
+}
+
+async function readCryptoKeyPair(): Promise<Partial<CryptoKeyPair>> {
+  return {
+    privateKey: await readCryptoKey(["private"], ["sign"]),
+    publicKey: await readCryptoKey(["public"], ["verify"]),
+  };
+}
+
+async function readCryptoKey(
+  id: string[],
+  usage: KeyUsage[],
+): Promise<CryptoKey | undefined> {
+  const jwk = await store.getItem<JsonWebKey>([...STORE_KEY_PREFIX, ...id]);
+
+  return jwk && crypto.subtle.importKey(
     "jwk",
-    privateJwk,
-    cryptoAlg(privateJwk.alg!)!,
+    jwk,
+    cryptoAlg(jwk.alg!)!,
     true,
-    ["sign"],
+    usage,
   );
-  const publicKey = await crypto.subtle.importKey(
-    "jwk",
-    publicJwk,
-    cryptoAlg(publicJwk.alg!)!,
-    true,
-    ["verify"],
-  );
-
-  return { privateKey, publicKey };
 }
 
-async function writeCryptoKeyPair(keys: CryptoKeyPair): Promise<void> {
-  const privateJwk = await crypto.subtle.exportKey("jwk", keys.privateKey);
-  const publicJwk = await crypto.subtle.exportKey("jwk", keys.publicKey);
-
-  await writeJwk(PRIVATE_KEY_FILE, privateJwk);
-  await writeJwk(PUBLIC_KEY_FILE, publicJwk);
+async function writeCryptoKeyPair(keys: Partial<CryptoKeyPair>): Promise<void> {
+  await writeCryptoKey(["private"], keys.privateKey);
+  await writeCryptoKey(["public"], keys.publicKey);
 }
 
-async function readJwk(filename: string): Promise<JsonWebKey | undefined> {
-  try {
-    return JSON.parse(await Deno.readTextFile(filename));
-  } catch (cause) {
-    if (!(cause instanceof Deno.errors.NotFound)) {
-      throw new Error(`Failed to read JWK file: ${filename}`, { cause });
-    }
-  }
-}
-
-async function writeJwk(filename: string, jwk: JsonWebKey): Promise<void> {
-  try {
-    await ensureDir(dirname(filename));
-    await Deno.writeTextFile(filename, JSON.stringify(jwk));
-  } catch (cause) {
-    throw new Error(`Failed to write JWK file: ${filename}`, { cause });
+async function writeCryptoKey(
+  id: string[],
+  cryptoKey: CryptoKey | undefined,
+): Promise<void> {
+  if (cryptoKey) {
+    const jwk = await crypto.subtle.exportKey("jwk", cryptoKey);
+    await store.setItem<JsonWebKey>([...STORE_KEY_PREFIX, ...id], jwk);
   }
 }
 
@@ -93,4 +101,13 @@ function generateKeyPair(): Promise<CryptoKeyPair> {
     true,
     ["sign", "verify"],
   );
+}
+
+async function generateJwks(): Promise<Jwks> {
+  const keys: JsonWebKey[] = [];
+  for await (const cryptoKey of getVerificationKeys()) {
+    const jwk = await crypto.subtle.exportKey("jwk", cryptoKey);
+    keys.push(jwk);
+  }
+  return { keys };
 }

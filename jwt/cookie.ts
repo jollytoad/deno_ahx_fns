@@ -2,7 +2,7 @@ import { deleteCookie, getCookies, setCookie } from "$std/http/cookie.ts";
 import { TOKEN_COOKIE } from "../constants.ts";
 import { decodeTokenPayload } from "./decode.ts";
 
-export function setTokenCookie(
+export function setCookieToken(
   req: Request,
   token: string | undefined,
   headers: Headers = new Headers(),
@@ -29,11 +29,11 @@ export function setTokenCookie(
   return headers;
 }
 
-export function getTokenCookie(req: Request): string | undefined {
+export function getCookieToken(req: Request): string | undefined {
   return getCookies(req.headers)[TOKEN_COOKIE];
 }
 
-export function deleteTokenCookie(
+export function deleteCookieToken(
   req: Request,
   headers: Headers = new Headers(),
 ): Headers {

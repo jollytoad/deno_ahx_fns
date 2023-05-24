@@ -18,3 +18,7 @@ export type KeySupplier = (
   req: Request,
   header: JwtHeader,
 ) => AsyncIterable<CryptoKey>;
+
+export interface Jwks {
+  keys: JsonWebKey[];
+}

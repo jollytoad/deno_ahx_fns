@@ -1,16 +1,25 @@
 import { cryptoAlg, jwtAlg } from "./alg.ts";
 import { encodeB64Url, encodeJsonPart, encodeUint8 } from "./encoding.ts";
+import { jti } from "./jti.ts";
 import { getSigningKey } from "./key.ts";
 import type { JwtClaims, JwtHeader } from "./types.ts";
+
+export interface CreateTokenOpts {
+  lifetime?: number;
+  key?: CryptoKey;
+}
+
+const DEFAULT_LIFETIME = 1 * 60 * 60; // 1 hour
 
 /**
  * Create a JWT Token
  */
 export async function createToken(
   req: Request,
-  data: Record<string, string>,
+  data: Record<string, unknown>,
+  opts: CreateTokenOpts = {},
 ): Promise<string | undefined> {
-  const key = await getSigningKey();
+  const key = opts.key ?? await getSigningKey();
 
   if (!key) {
     console.warn(`%cJWT: no signing key found`, "color: red;");
@@ -31,6 +40,7 @@ export async function createToken(
     {
       alg,
       typ: "JWT",
+      kid: "kid" in key && typeof key.kid === "string" ? key.kid : undefined,
     } satisfies JwtHeader,
   );
 
@@ -38,8 +48,9 @@ export async function createToken(
     {
       ...data,
       iat,
-      exp: iat + (1 * 60 * 60),
+      exp: iat + (opts.lifetime ?? DEFAULT_LIFETIME),
       iss: url.origin,
+      jti: jti(),
     } satisfies JwtClaims,
   );
 
