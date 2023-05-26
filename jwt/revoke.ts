@@ -47,7 +47,7 @@ export async function purgeExpiredRevokedTokens(): Promise<number> {
   const now = Math.floor(Date.now() / 1000);
   let purgeCount = 0;
 
-  for await (const [key] of store.listItems<string>(EXPIRING_PREFIX)) {
+  for await (const [key] of store.listItems(EXPIRING_PREFIX)) {
     const exp = key[EXPIRING_PREFIX.length];
     if (typeof exp === "number") {
       if (now > exp) {

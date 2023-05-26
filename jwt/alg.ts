@@ -32,7 +32,6 @@ interface HashedKeyAlgorithm extends KeyAlgorithm {
  * Get the JWT Algorithm name for a given CryptoKey
  */
 export function jwtAlg(key: CryptoKey): JwtAlg | undefined {
-  console.log("KEY", key);
   const algorithm = key.algorithm as HashedKeyAlgorithm;
   const prefix = algPrefix[algorithm.name];
   if (prefix) {
