@@ -1,9 +1,9 @@
 import { errorResponse } from "$http_fns/response.ts";
 import { Status } from "$std/http/http_status.ts";
-import { cryptoAlg } from "./alg.ts";
-import type { JwtHeader, KeySupplier } from "./types.ts";
+import { cryptoAlg } from "../_alg.ts";
+import type { JwtHeader, KeySupplier } from "../types.ts";
 
-export function keySupplierFromUrl(url: string): KeySupplier {
+export function keysFromUrl(url: string): KeySupplier {
   return async function* (_req: Request, header?: JwtHeader) {
     try {
       const response = await fetch(url);

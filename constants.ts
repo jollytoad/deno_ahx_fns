@@ -51,8 +51,3 @@ export const FULL_PAGE_HEADER = "AHX-Full-Page";
  * Prefix for augmentation ids in HTML.
  */
 export const AUGMENTATION_PREFIX = "ahx-";
-
-/**
- * Name of the AHX token cookie.
- */
-export const TOKEN_COOKIE = "ahx_token";

@@ -1,8 +1,8 @@
-import { cryptoAlg, jwtAlg } from "./alg.ts";
-import { encodeB64Url, encodeJsonPart, encodeUint8 } from "./encoding.ts";
-import { jti } from "./jti.ts";
-import { getSigningKey } from "./key.ts";
-import type { JwtClaims, JwtHeader } from "./types.ts";
+import { cryptoAlg, jwtAlg } from "../_alg.ts";
+import { encodeB64Url, encodeJsonPart, encodeUint8 } from "../_encoding.ts";
+import { jti } from "./_jti.ts";
+import { getSigningKey } from "./keys.ts";
+import type { JwtClaims, JwtHeader } from "../types.ts";
 
 export interface CreateTokenOpts {
   lifetime?: number;
@@ -49,7 +49,7 @@ export async function createToken(
       ...data,
       iat,
       exp: iat + (opts.lifetime ?? DEFAULT_LIFETIME),
-      iss: url.origin,
+      iss: url.host,
       jti: jti(),
     } satisfies JwtClaims,
   );

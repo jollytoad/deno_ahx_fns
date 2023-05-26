@@ -1,7 +1,9 @@
-import { verifyToken } from "../verify.ts";
-import { getGoogleKeys } from "./keys.ts";
+import { verifyToken } from "../client/verify.ts";
 import type { GoogleClaims, VerifyGoogleTokenOpts } from "./types.ts";
 import type { JwtClaims } from "../types.ts";
+import { keysFromUrl } from "../client/jwks.ts";
+
+const GOOGLE_JWKS_URL = "https://www.googleapis.com/oauth2/v3/certs";
 
 export async function verifyGoogleToken(
   req: Request,
@@ -9,7 +11,7 @@ export async function verifyGoogleToken(
   opts: VerifyGoogleTokenOpts,
 ): Promise<(JwtClaims & GoogleClaims) | undefined> {
   if (opts.clientId && token) {
-    const payload = await verifyToken<GoogleClaims>(req, token, getGoogleKeys);
+    const payload = await verifyToken<GoogleClaims>(req, token, keysFromUrl(GOOGLE_JWKS_URL));
 
     if (payload) {
       if (

@@ -1,15 +1,14 @@
-import { cryptoAlg } from "./alg.ts";
-import { decodeB64Url, decodeJsonPart, encodeUint8 } from "./encoding.ts";
-import { getVerificationKeys } from "./key.ts";
-import type { JwtClaims, JwtHeader, KeySupplier } from "./types.ts";
+import { cryptoAlg } from "../_alg.ts";
+import { decodeB64Url, decodeJsonPart, encodeUint8 } from "../_encoding.ts";
+import type { JwtClaims, JwtHeader, KeySupplier } from "../types.ts";
 
 /**
  * Verify a JWT token and obtain it's payload
  */
 export async function verifyToken<T>(
   req: Request,
-  jwt?: string,
-  keySupplier: KeySupplier = getVerificationKeys,
+  jwt: string | undefined,
+  keySupplier: KeySupplier,
 ): Promise<(JwtClaims & T) | undefined> {
   const parts = jwt?.split(".") ?? [];
   if (parts.length !== 3) return;

@@ -14,6 +14,12 @@ export interface JwtClaims {
   jti?: string;
 }
 
+export interface AhxClaims {
+  name?: string;
+  email?: string;
+  roles: string[];
+}
+
 export type KeySupplier = (
   req: Request,
   header: JwtHeader,
