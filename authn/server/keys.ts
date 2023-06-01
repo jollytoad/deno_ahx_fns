@@ -10,7 +10,7 @@ const DEFAULT_PUBLIC_KEY_MAX_AGE = 14 * 24 * 60 * 60; // 14 days
 
 export async function getSigningKey(): Promise<CryptoKey> {
   const jwk = await store.getItem<JsonWebKey>(PRIVATE_STORE_KEY);
-  let privateKey = jwk && await importCryptoKey(jwk, ['sign']);
+  let privateKey = jwk && await importCryptoKey(jwk, ["sign"]);
 
   if (!privateKey) {
     ({ privateKey } = await generateKeyPair());
@@ -86,10 +86,8 @@ async function generateKeyPair(): Promise<CryptoKeyPair> {
 
   const keyPair = await crypto.subtle.generateKey(
     {
-      name: "RSA-PSS",
-      hash: "SHA-256",
-      modulusLength: 4096,
-      publicExponent: new Uint8Array([1, 0, 1]),
+      name: "ECDSA",
+      namedCurve: "P-256",
     },
     true,
     ["sign", "verify"],
@@ -110,4 +108,3 @@ async function writeCryptoKey(
     await store.setItem<JsonWebKey>(storageKey, jwk);
   }
 }
-

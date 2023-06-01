@@ -22,9 +22,16 @@ export interface AhxClaims {
 
 export type KeySupplier = (
   req: Request,
-  header: JwtHeader,
+  header?: JwtHeader,
 ) => AsyncIterable<CryptoKey>;
 
 export interface Jwks {
   keys: JsonWebKey[];
 }
+
+export interface Tokens {
+  access_token?: string;
+  refresh_token?: string;
+}
+
+export type VerifyMode = "access" | "refresh";

@@ -1,6 +1,11 @@
 import { cryptoAlg } from "../_alg.ts";
 import { decodeB64Url, decodeJsonPart, encodeUint8 } from "../_encoding.ts";
-import type { JwtClaims, JwtHeader, KeySupplier } from "../types.ts";
+import type {
+  JwtClaims,
+  JwtHeader,
+  KeySupplier,
+  VerifyMode,
+} from "../types.ts";
 
 /**
  * Verify a JWT token and obtain it's payload
@@ -9,6 +14,7 @@ export async function verifyToken<T>(
   req: Request,
   jwt: string | undefined,
   keySupplier: KeySupplier,
+  mode: VerifyMode = "access",
 ): Promise<(JwtClaims & T) | undefined> {
   const parts = jwt?.split(".") ?? [];
   if (parts.length !== 3) return;
@@ -33,14 +39,16 @@ export async function verifyToken<T>(
 
   const payload = decodeJsonPart<JwtClaims & T>(payloadPart);
 
-  if (payload.exp && Number.isFinite(payload.exp) && now > payload.exp) {
-    console.warn("%cJWT: expired", "color: red;");
-    return;
-  }
+  if (mode === "access") {
+    if (payload.exp && Number.isFinite(payload.exp) && now > payload.exp) {
+      console.warn("%cJWT: expired", "color: red;");
+      return;
+    }
 
-  if (payload.nbf && Number.isFinite(payload.nbf) && now < payload.nbf) {
-    console.warn("%cJWT: not before", "color: red;");
-    return;
+    if (payload.nbf && Number.isFinite(payload.nbf) && now < payload.nbf) {
+      console.warn("%cJWT: not before", "color: red;");
+      return;
+    }
   }
 
   for await (const key of keySupplier(req, header)) {

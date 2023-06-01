@@ -11,7 +11,11 @@ export async function verifyGoogleToken(
   opts: VerifyGoogleTokenOpts,
 ): Promise<(JwtClaims & GoogleClaims) | undefined> {
   if (opts.clientId && token) {
-    const payload = await verifyToken<GoogleClaims>(req, token, keysFromUrl(GOOGLE_JWKS_URL));
+    const payload = await verifyToken<GoogleClaims>(
+      req,
+      token,
+      keysFromUrl(GOOGLE_JWKS_URL),
+    );
 
     if (payload) {
       if (

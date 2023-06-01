@@ -24,26 +24,34 @@ const algPrefix: Record<string, string> = {
   "RSA-PSS": "PS",
 };
 
-interface HashedKeyAlgorithm extends KeyAlgorithm {
+interface KeyAlgorithmVariant extends KeyAlgorithm {
   hash?: HashAlgorithmIdentifier;
+  namedCurve?: NamedCurve;
 }
 
 /**
  * Get the JWT Algorithm name for a given CryptoKey
  */
 export function jwtAlg(key: CryptoKey): JwtAlg | undefined {
-  const algorithm = key.algorithm as HashedKeyAlgorithm;
-  const prefix = algPrefix[algorithm.name];
-  if (prefix) {
-    const hash = typeof algorithm.hash === "object"
-      ? algorithm.hash.name
-      : algorithm.hash;
-    if (typeof hash === "string" && hash.startsWith("SHA-")) {
-      const alg = prefix + hash.slice(4) as JwtAlg;
-      if (algorithms[alg]) {
-        return alg;
-      }
-    }
+  const prefix = algPrefix[key.algorithm.name] || undefined;
+  const size = prefix && getAlgSize(key.algorithm);
+  const alg = prefix && size && (`${prefix}${size}` as JwtAlg);
+  return alg && algorithms[alg] ? alg : undefined;
+}
+
+function getAlgSize(
+  { hash, namedCurve }: KeyAlgorithmVariant,
+): string | undefined {
+  if (typeof hash === "object") {
+    hash = hash.name;
+  }
+
+  if (typeof hash === "string" && hash.startsWith("SHA-")) {
+    return hash.slice(4);
+  }
+
+  if (typeof namedCurve === "string" && namedCurve.startsWith("P-")) {
+    return namedCurve.slice(2);
   }
 }
 

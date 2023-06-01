@@ -17,7 +17,7 @@ export async function revokeToken(
 ): Promise<boolean> {
   const { exp, jti } = await verifyToken(req, jwt, getVerificationKeys) ?? {};
 
-  if (jti && typeof exp === 'number' && Number.isSafeInteger(exp) && exp > 0) {
+  if (jti && typeof exp === "number" && Number.isSafeInteger(exp) && exp > 0) {
     await store.setItem([...REVOKED_STORE_KEY_PREFIX, exp, jti], true);
     return true;
   }
@@ -32,9 +32,10 @@ export async function isTokenRevoked(
   _req: Request,
   jwt: string | JwtClaims | undefined,
 ): Promise<boolean> {
-  const { exp, jti } = (typeof jwt === "string" ? decodeTokenPayload(jwt) : jwt) ?? {};
+  const { exp, jti } =
+    (typeof jwt === "string" ? decodeTokenPayload(jwt) : jwt) ?? {};
 
-  if (jti && typeof exp === 'number' && Number.isSafeInteger(exp) && exp > 0) {
+  if (jti && typeof exp === "number" && Number.isSafeInteger(exp) && exp > 0) {
     return !!await store.getItem([...REVOKED_STORE_KEY_PREFIX, exp, jti]);
   }
 

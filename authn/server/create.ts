@@ -2,7 +2,7 @@ import { cryptoAlg, jwtAlg } from "../_alg.ts";
 import { encodeB64Url, encodeJsonPart, encodeUint8 } from "../_encoding.ts";
 import { jti } from "./_jti.ts";
 import { getSigningKey } from "./keys.ts";
-import type { JwtClaims, JwtHeader } from "../types.ts";
+import type { JwtClaims, JwtHeader, Tokens } from "../types.ts";
 
 export interface CreateTokenOpts {
   lifetime?: number;
@@ -14,7 +14,7 @@ const DEFAULT_LIFETIME = 1 * 60 * 60; // 1 hour
 /**
  * Create a JWT Token
  */
-export async function createToken(
+export async function createAccessToken(
   req: Request,
   data: Record<string, unknown>,
   opts: CreateTokenOpts = {},
@@ -28,7 +28,10 @@ export async function createToken(
 
   const alg = jwtAlg(key);
   if (!alg) {
-    console.warn(`%cJWT: unsupported algorithm: ${alg}`, "color: red;");
+    console.warn(
+      `%cJWT: unsupported algorithm: ${key.algorithm.name}`,
+      "color: red;",
+    );
     return;
   }
 
@@ -69,3 +72,48 @@ export async function createToken(
 
   return headerAndPayloadParts + "." + signaturePart;
 }
+
+export async function createRefreshToken(
+  _req: Request,
+  jwt: string,
+  opts: CreateTokenOpts = {},
+) {
+  const key = opts.key ?? await getSigningKey();
+
+  const alg = jwtAlg(key);
+  if (!alg) {
+    console.warn(
+      `%cJWT: unsupported algorithm: ${key.algorithm.name}`,
+      "color: red;",
+    );
+    return;
+  }
+
+  const signature = await crypto.subtle.sign(
+    {
+      ...cryptoAlg(alg),
+      ...key.algorithm,
+    },
+    key,
+    encodeUint8(jwt),
+  );
+
+  return encodeB64Url(signature);
+}
+
+export async function createTokens(
+  req: Request,
+  data: Record<string, unknown>,
+  opts: CreateTokenOpts = {},
+): Promise<Tokens | undefined> {
+  const access_token = await createAccessToken(req, data, opts);
+
+  if (access_token) {
+    const refresh_token = await createRefreshToken(req, access_token, opts);
+    if (refresh_token) {
+      return { access_token, refresh_token };
+    }
+  }
+}
+
+export { createAccessToken as createToken };

@@ -1,4 +1,7 @@
 {
+  "tasks": {
+    "check": "deno fmt && deno lint && deno check **/*.ts"
+  },
   "imports": {
     "@/handler.ts": "./_handler.ts",
     "$std/": "https://deno.land/std@0.189.0/",
