@@ -7,6 +7,6 @@
     "$std/": "https://deno.land/std@0.189.0/",
     "$http_fns/": "https://deno.land/x/http_fns@v0.0.9/",
     "$http_render_fns/": "https://deno.land/x/http_render_fns@v0.0.1/",
-    "$store": "https://deno.land/x/storage_modules@v0.0.5/deno_fs.ts"
+    "$store": "https://deno.land/x/storage_modules@v0.0.6/deno_fs.ts"
   }
 }

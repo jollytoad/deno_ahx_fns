@@ -21,7 +21,7 @@ export async function getSigningKey(): Promise<CryptoKey> {
 
 export async function* getVerificationKeys(): AsyncIterable<CryptoKey> {
   for await (
-    const [, jwk] of store.listItems<JsonWebKey>(PUBLIC_STORE_KEY_PREFIX)
+    const [, jwk] of store.listItems<JsonWebKey>(PUBLIC_STORE_KEY_PREFIX, true)
   ) {
     const publicKey = await importCryptoKey(jwk, ["verify"]);
     if (publicKey) {
@@ -33,7 +33,7 @@ export async function* getVerificationKeys(): AsyncIterable<CryptoKey> {
 export async function getJwks(): Promise<Jwks> {
   const keys: JsonWebKey[] = [];
   for await (
-    const [, jwk] of store.listItems<JsonWebKey>(PUBLIC_STORE_KEY_PREFIX)
+    const [, jwk] of store.listItems<JsonWebKey>(PUBLIC_STORE_KEY_PREFIX, true)
   ) {
     keys.push(jwk);
   }
