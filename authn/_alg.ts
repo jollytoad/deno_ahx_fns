@@ -5,7 +5,7 @@ type AlgorithmParams = Algorithm | RsaPssParams | EcdsaParams | EcKeyGenParams;
 const algorithms = {
   ES256: { name: "ECDSA", hash: "SHA-256", namedCurve: "P-256" },
   ES384: { name: "ECDSA", hash: "SHA-384", namedCurve: "P-384" },
-  ES512: { name: "ECDSA", hash: "SHA-512", namedCurve: "P-512" },
+  ES512: { name: "ECDSA", hash: "SHA-512", namedCurve: "P-521" },
   HS256: { name: "HMAC", hash: "SHA-256" },
   HS384: { name: "HMAC", hash: "SHA-384" },
   HS512: { name: "HMAC", hash: "SHA-512" },
@@ -34,12 +34,12 @@ interface KeyAlgorithmVariant extends KeyAlgorithm {
  */
 export function jwtAlg(key: CryptoKey): JwtAlg | undefined {
   const prefix = algPrefix[key.algorithm.name] || undefined;
-  const size = prefix && getAlgSize(key.algorithm);
+  const size = prefix && getHashAlg(key.algorithm);
   const alg = prefix && size && (`${prefix}${size}` as JwtAlg);
   return alg && algorithms[alg] ? alg : undefined;
 }
 
-function getAlgSize(
+function getHashAlg(
   { hash, namedCurve }: KeyAlgorithmVariant,
 ): string | undefined {
   if (typeof hash === "object") {
@@ -51,7 +51,7 @@ function getAlgSize(
   }
 
   if (typeof namedCurve === "string" && namedCurve.startsWith("P-")) {
-    return namedCurve.slice(2);
+    return namedCurve === "P-521" ? "512" : namedCurve.slice(2);
   }
 }
 
