@@ -1,9 +1,15 @@
 import {
   type Handler,
   serve as stdServe,
-  type ServeInit,
+  serveTls as stdServeTls,
+  type ServeTlsInit,
 } from "$std/http/server.ts";
-import { intercept, type ResponseInterceptor } from "$http_fns/intercept.ts";
+import {
+  ErrorInterceptor,
+  intercept,
+  RequestInterceptor,
+  type ResponseInterceptor,
+} from "$http_fns/intercept.ts";
 import {
   logError,
   logGroupEnd,
@@ -11,8 +17,13 @@ import {
   logStatusAndContentType,
 } from "$http_fns/logger.ts";
 
-interface ExtraInit {
-  responseInterceptors?: ResponseInterceptor<Response>[];
+export interface ServeAhxInit extends ServeTlsInit {
+  quiet?: boolean;
+  interceptors?: {
+    request?: RequestInterceptor[];
+    response?: ResponseInterceptor<Response>[];
+    error?: ErrorInterceptor<Response>[];
+  };
 }
 
 /**
@@ -20,15 +31,51 @@ interface ExtraInit {
  */
 export function serve(
   handler: Handler,
-  { responseInterceptors = [], ...options }: ServeInit & ExtraInit = {},
+  { quiet, interceptors, ...options }: ServeAhxInit = {},
 ) {
-  return stdServe(
+  const serveFn = hasKeyAndCert(options) ? stdServeTls : stdServe;
+
+  return serveFn(
     intercept(
       handler,
-      [logRequestGroup],
-      [...responseInterceptors, logGroupEnd, logStatusAndContentType],
-      [logGroupEnd, logError],
+      quiet
+        ? interceptors?.request ?? []
+        : [logRequestGroup, ...interceptors?.request ?? []],
+      quiet ? interceptors?.response ?? [] : [
+        ...interceptors?.response ?? [],
+        logGroupEnd,
+        logStatusAndContentType,
+      ],
+      quiet
+        ? interceptors?.error ?? []
+        : [...interceptors?.error ?? [], logGroupEnd, logError],
     ),
-    options,
+    {
+      onListen: quiet ? undefined : logServerUrl(options),
+      ...options,
+    },
   );
+}
+
+export function displayHost(hostname: string) {
+  if (hostname === "::" || hostname === "0.0.0.0") {
+    return "localhost";
+  }
+  return hostname;
+}
+
+type OnListenParam = Parameters<Required<ServeTlsInit>["onListen"]>[0];
+
+export function logServerUrl(options: ServeTlsInit) {
+  return ({ hostname, port }: OnListenParam) => {
+    const protocol = hasKeyAndCert(options) ? "https" : "http";
+    console.log(
+      `${protocol}://${displayHost(hostname)}:${port}`,
+    );
+  };
+}
+
+function hasKeyAndCert(options: ServeTlsInit): boolean {
+  return !!(options.key || options.keyFile) &&
+    !!(options.cert || options.certFile);
 }
