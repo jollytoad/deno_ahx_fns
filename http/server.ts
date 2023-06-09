@@ -35,6 +35,13 @@ export function serve(
 ) {
   const serveFn = hasKeyAndCert(options) ? stdServeTls : stdServe;
 
+  // Prevent unhandled rejections from crashing the server
+  // This can happen when Request/Response are aborted
+  globalThis.addEventListener("unhandledrejection", (e) => {
+    console.warn("%cUnhandled rejection:", "color: red;", e.reason);
+    e.preventDefault();
+  });
+
   return serveFn(
     intercept(
       handler,
