@@ -1,7 +1,7 @@
-import { serve as serveAhx, type ServeAhxInit } from "./server.ts";
+import { serve as serveAhx } from "./server.ts";
+import type { ServeHandler, ServeInit, ServeOptions } from "./server.ts";
 import { port } from "$http_fns/port.ts";
-import { loadTlsInit } from "./secure_localhost.ts";
-import type { Handler } from "$std/http/server.ts";
+import { loadKeyAndCert } from "./secure_localhost.ts";
 
 /**
  * Standard dev server for an addon.
@@ -11,14 +11,32 @@ import type { Handler } from "$std/http/server.ts";
  *
  * Defaults to port 8000 unless the PORT env var is set.
  */
-export async function serve(
-  handler: Handler,
-  options: ServeAhxInit = {},
-) {
-  return serveAhx(handler, {
-    ...await loadTlsInit(),
+export function serve(init: ServeInit | ServeHandler): Promise<void>;
+
+export function serve(
+  handler: ServeHandler,
+  options?: ServeOptions,
+): Promise<void>;
+
+export function serve(
+  init: ServeInit | ServeHandler,
+  options?: ServeOptions,
+): Promise<void> {
+  if (typeof init === "function") {
+    return serve_({
+      handler: init,
+      ...options,
+    });
+  } else {
+    return serve_(init);
+  }
+}
+
+export async function serve_(init: ServeInit) {
+  return serveAhx({
+    ...await loadKeyAndCert(),
     hostname: "::",
     port: port(),
-    ...options,
+    ...init,
   });
 }

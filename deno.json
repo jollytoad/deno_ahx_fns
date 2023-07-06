@@ -4,8 +4,8 @@
   },
   "imports": {
     "@/handler.ts": "./_handler.ts",
-    "$std/": "https://deno.land/std@0.192.0/",
-    "$http_fns/": "https://deno.land/x/http_fns@v0.0.15/",
+    "$std/": "https://deno.land/std@0.193.0/",
+    "$http_fns/": "https://deno.land/x/http_fns@v0.0.17/",
     "$http_render_fns/": "https://deno.land/x/http_render_fns@v0.0.4/",
     "$store": "https://deno.land/x/storage_modules@v0.0.7/deno_fs.ts"
   }

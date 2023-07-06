@@ -1,10 +1,4 @@
 import {
-  type Handler,
-  serve as stdServe,
-  serveTls as stdServeTls,
-  type ServeTlsInit,
-} from "$std/http/server.ts";
-import {
   ErrorInterceptor,
   intercept,
   RequestInterceptor,
@@ -17,24 +11,56 @@ import {
   logStatusAndContentType,
 } from "$http_fns/logger.ts";
 
-export interface ServeAhxInit extends ServeTlsInit {
+export type ServeInit = Deno.ServeInit & ServeOptions;
+
+export type ServeOptions = (Deno.ServeOptions | Deno.ServeTlsOptions) & {
   quiet?: boolean;
   interceptors?: {
     request?: RequestInterceptor[];
     response?: ResponseInterceptor<Response>[];
     error?: ErrorInterceptor<Response>[];
   };
+};
+
+export type OnListenProps = Parameters<Required<ServeOptions>["onListen"]>[0];
+
+export type ServeHandler = Deno.ServeHandler;
+
+/**
+ * @deprecated use ServeOptions/ServeInit
+ */
+export type ServeAhxInit = ServeOptions;
+
+/**
+ * Standard server for an addon.
+ */
+export function serve(init: ServeInit | ServeHandler): Promise<void>;
+
+export function serve(
+  handler: ServeHandler,
+  options?: ServeOptions,
+): Promise<void>;
+
+export function serve(
+  init: ServeInit | ServeHandler,
+  options?: ServeOptions,
+): Promise<void> {
+  if (typeof init === "function") {
+    return serve_({
+      handler: init,
+      ...options,
+    });
+  } else {
+    return serve_(init);
+  }
 }
 
 /**
  * Standard server for an addon.
  */
-export function serve(
-  handler: Handler,
-  { quiet, interceptors, ...options }: ServeAhxInit = {},
-) {
-  const serveFn = hasKeyAndCert(options) ? stdServeTls : stdServe;
-
+function serve_(
+  { handler, quiet, interceptors, ...options }: ServeInit,
+): Promise<void> {
   // Prevent unhandled rejections from crashing the server
   // This can happen when Request/Response are aborted
   globalThis.addEventListener("unhandledrejection", (e) => {
@@ -42,7 +68,11 @@ export function serve(
     e.preventDefault();
   });
 
-  return serveFn(
+  return Deno.serve(
+    {
+      onListen: quiet ? undefined : logServerUrl(options),
+      ...options,
+    },
     intercept(
       handler,
       quiet
@@ -57,11 +87,7 @@ export function serve(
         ? interceptors?.error ?? []
         : [...interceptors?.error ?? [], logGroupEnd, logError],
     ),
-    {
-      onListen: quiet ? undefined : logServerUrl(options),
-      ...options,
-    },
-  );
+  ).finished;
 }
 
 export function displayHost(hostname: string) {
@@ -71,18 +97,25 @@ export function displayHost(hostname: string) {
   return hostname;
 }
 
-type OnListenParam = Parameters<Required<ServeTlsInit>["onListen"]>[0];
+export function getServerProtocol(options: ServeOptions): string {
+  return hasKeyAndCert(options) ? "https" : "http";
+}
 
-export function logServerUrl(options: ServeTlsInit) {
-  return ({ hostname, port }: OnListenParam) => {
-    const protocol = hasKeyAndCert(options) ? "https" : "http";
-    console.log(
-      `${protocol}://${displayHost(hostname)}:${port}`,
-    );
+export function getServerUrl(
+  hostname: string,
+  port: number,
+  options: ServeOptions,
+): string {
+  return `${getServerProtocol(options)}://${displayHost(hostname)}:${port}`;
+}
+
+export function logServerUrl(options: ServeOptions) {
+  return ({ hostname, port }: OnListenProps) => {
+    console.log(getServerUrl(hostname, port, options));
   };
 }
 
-function hasKeyAndCert(options: ServeTlsInit): boolean {
-  return !!(options.key || options.keyFile) &&
-    !!(options.cert || options.certFile);
+function hasKeyAndCert(options: ServeOptions): boolean {
+  return "key" in options && !!options.key && "cert" in options &&
+    !!options.cert;
 }
