@@ -2,11 +2,14 @@
   "tasks": {
     "check": "deno fmt && deno lint && deno check **/*.ts"
   },
+  "compilerOptions": {
+    "verbatimModuleSyntax": true
+  },
   "imports": {
-    "@/handler.ts": "./_handler.ts",
-    "$std/": "https://deno.land/std@0.193.0/",
-    "$http_fns/": "https://deno.land/x/http_fns@v0.0.17/",
-    "$http_render_fns/": "https://deno.land/x/http_render_fns@v0.0.4/",
+    "$std/": "https://deno.land/std@0.197.0/",
+    "https://deno.land/std@0.192.0/": "https://deno.land/std@0.197.0/",
+    "$http_fns/": "https://deno.land/x/http_fns@v0.0.25/",
+    "$http_render_fns/": "https://deno.land/x/http_render_fns@v0.0.5/",
     "$store": "https://deno.land/x/storage_modules@v0.0.7/deno_fs.ts"
   }
 }

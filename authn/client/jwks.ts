@@ -1,5 +1,4 @@
-import { errorResponse } from "$http_fns/response.ts";
-import { Status } from "$std/http/http_status.ts";
+import { badGateway } from "$http_fns/response/bad_gateway.ts";
 import { cryptoAlg } from "../_alg.ts";
 import type { JwtHeader, KeySupplier } from "../types.ts";
 
@@ -33,10 +32,7 @@ export function keysFromUrl(url: string): KeySupplier {
       }
     } catch (e) {
       console.error(e);
-      throw errorResponse(
-        `Failed to fetch public keys from ${url}`,
-        Status.BadGateway,
-      );
+      throw badGateway(`Failed to fetch public keys from ${url}`);
     }
   };
 }

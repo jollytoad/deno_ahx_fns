@@ -1,6 +1,6 @@
 import { cryptoAlg, jwtAlg } from "../_alg.ts";
 import { decodeB64Url, encodeUint8 } from "../_encoding.ts";
-import { KeySupplier, Tokens } from "../types.ts";
+import type { KeySupplier, Tokens } from "../types.ts";
 
 export async function verifyRefreshToken(
   req: Request,

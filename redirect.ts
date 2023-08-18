@@ -1,6 +1,7 @@
-import { getBodyAsObject, getSearchValues } from "$http_fns/request.ts";
-import { response } from "$http_fns/response.ts";
-import { Status } from "$std/http/http_status.ts";
+import { getBodyAsObject } from "$http_fns/request/body_as_object.ts";
+import { getSearchValues } from "$http_fns/request/search_values.ts";
+import { seeOther } from "$http_fns/response/see_other.ts";
+import { noContent } from "$http_fns/response/no_content.ts";
 import { getAhxUrls } from "./urls.ts";
 
 export async function getRedirect(
@@ -48,10 +49,5 @@ export async function redirectResponse(
 ): Promise<Response> {
   const location = await getRedirect(req, redirect);
 
-  if (location) {
-    headers.set("Location", location);
-    return response(Status.SeeOther, null, headers);
-  } else {
-    return response(Status.NoContent, null, headers);
-  }
+  return location ? seeOther(location, headers) : noContent(headers);
 }

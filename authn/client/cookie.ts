@@ -1,6 +1,6 @@
 import { deleteCookie, getCookies, setCookie } from "$std/http/cookie.ts";
 import { ACCESS_TOKEN_COOKIE, REFRESH_TOKEN_COOKIE } from "../constants.ts";
-import { Tokens } from "../types.ts";
+import type { Tokens } from "../types.ts";
 import { decodeTokenPayload } from "./decode.ts";
 
 export function setCookieToken(

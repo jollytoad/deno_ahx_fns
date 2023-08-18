@@ -1,5 +1,5 @@
 import { decodeJsonPart } from "../_encoding.ts";
-import { JwtClaims } from "../types.ts";
+import type { JwtClaims } from "../types.ts";
 
 export function decodeTokenPayload<T>(
   jwt: string,
