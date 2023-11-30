@@ -2,7 +2,7 @@ import { getBodyAsObject } from "$http_fns/request/body_as_object.ts";
 import { getSearchValues } from "$http_fns/request/search_values.ts";
 import { seeOther } from "$http_fns/response/see_other.ts";
 import { noContent } from "$http_fns/response/no_content.ts";
-import { getAhxUrls } from "./urls.ts";
+import { getAhxUrls } from "../lib/urls.ts";
 
 export async function getRedirect(
   req: Request,
